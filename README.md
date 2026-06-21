@@ -13,7 +13,7 @@
 
 ---
 <p align="center">
-  <a href="https://skill-map-nine.vercel.app/">
+  <a href="https://rohitgrid.github.io/UrbanWatch-AI/">
     <img src="https://img.shields.io/badge/Live%20Demo-Visit%20Now-brightgreen?style=for-the-badge" />
   </a>
 </p>
