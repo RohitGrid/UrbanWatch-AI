@@ -25,7 +25,7 @@
 <table>
 <tr>
 
-<td width="140" align="center" valign="top">
+<td width="140" align="center" valign="middle">
 
 <img src="assets/vis.png" width="120">
 
