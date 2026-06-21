@@ -1,4 +1,4 @@
-<div align="center">
+<img width="1184" height="322" alt="image" src="https://github.com/user-attachments/assets/cafafa1b-fe7b-4602-9b14-5b545fc35faf" /><div align="center">
 
 <img src="assets/logo.jpg" alt="UrbanWatch AI" width="100%" />
 
@@ -138,7 +138,7 @@ flowchart TD
 ## The three models
 
 ### 1. Hotspot Map Engine — `notebooks/hotspot_map_eda.ipynb`
-
+<img src="assets/heatmap.png" class="engine-image">
 Exploratory analysis plus an unsupervised geo-clustering pass:
 
 - Bins every GPS-tagged, approved violation into a **0.001°×0.001° grid cell** (≈100m) and keeps cells with ≥10 violations.
@@ -150,7 +150,7 @@ Exploratory analysis plus an unsupervised geo-clustering pass:
 - Outputs: `eda_overview.png` (4-panel EDA), `hotspot_clusters.csv`, **`parking_hotspot_map.html`** (the file the dashboard's Heatmap tab embeds in an iframe).
 
 ### 2. Junction CSI Scoring Engine — `scripts/junction_factors.py`
-
+<img src="assets/CSI Engine.png" class="engine-image">
 Turns raw violations into a single, explainable **Congestion Severity Index (0–100)** per named junction:
 
 | Signal | Weight | What it measures |
