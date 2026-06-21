@@ -207,7 +207,7 @@ UrbanWatch-ai/
 ├── scripts/
 │   └── junction_factors.py            
 ├── data/
-│   └── police.csv                     
+│   └── police.rar             
 └── assets/
     ├── logo.jpg
     ├── rf_confidence_scatter.png
@@ -254,16 +254,21 @@ pip install pandas numpy scikit-learn matplotlib seaborn folium jupyter
 
 ### Provide Input Data
 
-Place:
+Place the dataset inside the repository:
 
 ```text
-police.csv
+data/police.rar
 ```
-
 in the repository root directory.
-
-
-
+Then extract it before running any models:
+```bash
+# Extract dataset
+unrar x data/police.rar data/
+```
+After extraction, ensure this file exists:
+```text
+data/police.csv
+```
 ## Model 1 — Parking Violation Hotspot Analysis
 
 ```bash
@@ -354,7 +359,7 @@ hotspot_predictions.json
 <tr>
 <td>Rohit Manoj Nair</td>
 <td>
-<a href="https://www.linkedin.com/">
+<a href="https://www.linkedin.com/in/rohit-manoj/">
 <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" width="16"/>
 LinkedIn
 </a>
@@ -364,7 +369,7 @@ LinkedIn
 <tr>
 <td>Diksha Swami</td>
 <td>
-<a href="https://www.linkedin.com/">
+<a href="https://www.linkedin.com/in/diksha-swami-7a17193b0/">
 <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" width="16"/>
 LinkedIn
 </a>
@@ -374,7 +379,7 @@ LinkedIn
 <tr>
 <td>Madhav Kedia</td>
 <td>
-<a href="https://www.linkedin.com/">
+<a href="https://www.linkedin.com/in/madhav-kedia-588474314/">
 <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" width="16"/>
 LinkedIn
 </a>
@@ -384,7 +389,7 @@ LinkedIn
 <tr>
 <td>Jacob Sadeesh Palet</td>
 <td>
-<a href="https://www.linkedin.com/">
+<a href="https://www.linkedin.com/in/jacob-sadeesh-palet-b8aab7230/">
 <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" width="16"/>
 LinkedIn
 </a>
