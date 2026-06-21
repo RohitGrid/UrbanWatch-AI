@@ -1,5 +1,3 @@
-<img width="1184" height="322" alt="image" src="https://github.com/user-attachments/assets/cafafa1b-fe7b-4602-9b14-5b545fc35faf" /><div align="center">
-
 <img src="assets/logo.jpg" alt="UrbanWatch AI" width="100%" />
 
 ### AI-driven parking intelligence that turns raw violation data into targeted enforcement decisions
