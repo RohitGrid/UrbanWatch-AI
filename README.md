@@ -131,8 +131,6 @@ flowchart TD
     H --> K["Hotspot Predictor ·<br/>Violation Analyser tabs"]
 ```
 
-> **Design note:** the three components select their "top junctions" independently (grid-cell bins vs. cleaned junction names vs. raw violation-count ranking), so their outputs are deliberately *complementary views* of the same problem rather than one merged ranking. The CSI engine's named-junction ranking feeds the Hotspot Analysis/Enforcement/CSI tabs; the RandomForest's own top-20-by-volume selection feeds the Predictor/Analyser tabs.
-
 ## The three models
 
 ### 1. Hotspot Map Engine — `notebooks/hotspot_map_eda.ipynb`
