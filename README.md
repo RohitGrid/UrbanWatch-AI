@@ -7,8 +7,8 @@
 [![Pandas](https://img.shields.io/badge/Pandas-Data%20Pipeline-150458?style=flat-square&logo=pandas&logoColor=white)](https://pandas.pydata.org/)
 [![Folium](https://img.shields.io/badge/Folium-Geospatial-77B829?style=flat-square&logo=leaflet&logoColor=white)](https://python-visualization.github.io/folium/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
-[![Hackathon](https://img.shields.io/badge/Built%20for-%5BHackathon%20Name%5D-blueviolet?style=flat-square)](#)
-
+[![Hackathon](https://img.shields.io/badge/Built%20for-Gridlock%20Hackathon%202.0-blueviolet?style=flat-square)](https://gridlock2point0.hackerearth.com/)
+[![Flipkart](https://img.shields.io/badge/Flipkart-Partner-2874F0?style=flat-square&logo=flipkart&logoColor=white)](https://www.flipkart.com)
 </div>
 
 ---
@@ -188,7 +188,9 @@ This single JSON file powers **both** the Hotspot Predictor (pick a day/hour, se
 - **Scale:** ~298,450 total records; 123,734 of those fall within the 20 highest-volume zones used for model training
 - **Key fields used:** `created_datetime`, `latitude`/`longitude`, `location`, `junction_name`, `violation_type`, `vehicle_type`, `vehicle_number`, `validation_status`, `validation_timestamp`
 
-`police.csv` is not committed to this repo (large, and may be access-restricted by the hackathon organizers) — see [`data/README.md`](data/README.md) for where to place it.
+The dataset is not owned, created, or maintained by the project authors and is used solely for research, analysis, and model development purposes.
+
+For licensing and distribution terms, please refer to the original data provider.
 
 ## Project structure
 
@@ -196,57 +198,144 @@ This single JSON file powers **both** the Hotspot Predictor (pick a day/hour, se
 UrbanWatch-ai/
 ├── README.md
 ├── LICENSE
-├── .gitignore
-├── app.html                        # the dashboard — open this in a browser to run it
-├── hotspot_predictions.json        # Model 3 output — MUST stay next to app.html (fetch('./hotspot_predictions.json'))
-├── parking_hotspot_map.html        # Model 1 output — MUST stay next to app.html (iframe target) — add after running the notebook
+├── UrbanWatch.html                      
+├── hotspot_predictions.json        
+├── parking_hotspot_map.html       
 ├── notebooks/
-│   ├── hotspot_map_eda.ipynb           # Model 1: EDA + geo-clustering + Folium heatmap
-│   └── hotspot_predictor_training.ipynb # Model 3: RandomForestRegressor training
+│   ├── hotspot_map_eda.ipynb          
+│   └── hotspot_predictor_training.ipynb
 ├── scripts/
-│   └── junction_factors.py             # Model 2: junction CSI scoring engine
+│   └── junction_factors.py            
 ├── data/
-│   ├── README.md                       # where to get police.csv
-│   └── police.csv                      # (gitignored — add your own copy)
+│   └── police.csv                     
 └── assets/
-    ├── banner.svg / banner.png
+    ├── logo.jpg
+    ├── rf_confidence_scatter.png
     └── screenshot-*.png
 ```
 
-> ⚠️ **`hotspot_predictions.json`** and **`parking_hotspot_map.html`** must live in the **same folder as `app.html`** — the dashboard loads both with relative `fetch()`/`iframe` paths.
 
-## Getting started
+# Getting Started
 
-### Run the dashboard (what judges will actually look at)
+## Run the Dashboard (Recommended)
+
+This launches the final UrbanWatch AI dashboard used for demonstration.
 
 ```bash
 git clone https://github.com/<your-org>/UrbanWatch-ai.git
 cd UrbanWatch-ai
+
 python -m http.server 8000
-# open http://localhost:8000/app.html
 ```
 
-A local server (rather than opening the file directly) avoids browser CORS restrictions on the `fetch('./hotspot_predictions.json')` call.
+Open:
 
-### Reproduce the models from scratch
+```text
+http://localhost:8000/app.html
+```
+
+A local HTTP server is required because the dashboard loads:
+
+```text
+hotspot_predictions.json
+```
+
+using JavaScript `fetch()`, which may be blocked by browser CORS restrictions when opening the HTML file directly.
+
+
+
+## Reproduce the Models
+
+### Install Dependencies
 
 ```bash
-pip install pandas numpy scikit-learn folium matplotlib seaborn jupyter
-
-# 1. Place police.csv in the repo root (see data/README.md)
-
-# 2. Junction CSI scoring (Model 2)
-python scripts/junction_factors.py
-# → junction_csi_clean.csv
-
-# 3. Hotspot map (Model 1)
-jupyter nbconvert --to notebook --execute notebooks/hotspot_map_eda.ipynb
-# → parking_hotspot_map.html  (copy to repo root)
-
-# 4. Hotspot prediction model (Model 3)
-jupyter nbconvert --to notebook --execute notebooks/hotspot_predictor_training.ipynb
-# → hotspot_predictions.json  (copy to repo root)
+pip install pandas numpy scikit-learn matplotlib seaborn folium jupyter
 ```
+
+### Provide Input Data
+
+Place:
+
+```text
+police.csv
+```
+
+in the repository root directory.
+
+
+
+## Model 1 — Parking Violation Hotspot Analysis
+
+```bash
+jupyter nbconvert --to notebook --execute notebooks/hotspot_map_eda.ipynb
+```
+
+Output:
+
+```text
+parking_hotspot_map.html
+```
+
+Copy the generated file to the repository root if required by the dashboard.
+
+
+
+## Model 2 — Junction Congestion Severity Index (CSI)
+
+```bash
+python scripts/junction_factors.py
+```
+
+Output:
+
+```text
+junction_csi_clean.csv
+```
+
+
+
+## Model 3 — Hotspot Prediction Engine
+
+```bash
+jupyter nbconvert --to notebook --execute notebooks/hotspot_predictor_training.ipynb
+```
+
+Outputs:
+
+```text
+hotspot_predictions.json
+rf_confidence_scatter.png
+top_predicted_hotspots.png
+```
+
+Copy:
+
+```text
+hotspot_predictions.json
+```
+
+to the repository root if required by the dashboard.
+
+
+
+## Expected Outputs
+
+After successful execution, the repository should contain:
+
+```text
+app.html
+hotspot_predictions.json
+junction_csi_clean.csv
+parking_hotspot_map.html
+rf_confidence_scatter.png
+```
+
+The dashboard will automatically consume the generated prediction data from:
+
+```text
+hotspot_predictions.json
+```
+---
 
 ## Tech stack
 
@@ -259,22 +348,49 @@ jupyter nbconvert --to notebook --execute notebooks/hotspot_predictor_training.i
 | Frontend | vanilla HTML/CSS/JS, Chart.js (radar/bar/line/scatter charts) |
 | Data interchange | static JSON lookup table |
 
-## Roadmap
+## 👥 Team
 
-- [ ] Unify the three top-20 junction selections behind one canonical zone list
-- [ ] Replace the static `hotspot_predictions.json` lookup with a live inference endpoint
-- [ ] Add officer GPS check-in to close the loop between recommendation and actual response time
-- [ ] Auto-refresh CSI scores on a rolling window instead of a static snapshot
-- [ ] Mobile-friendly officer view for in-field hotspot lookup
+<table>
+<tr>
+<td>Rohit Manoj Nair</td>
+<td>
+<a href="https://www.linkedin.com/">
+<img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" width="16"/>
+LinkedIn
+</a>
+</td>
+</tr>
 
-## Team
+<tr>
+<td>Diksha Swami</td>
+<td>
+<a href="https://www.linkedin.com/">
+<img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" width="16"/>
+LinkedIn
+</a>
+</td>
+</tr>
 
-| Name | Role | GitHub |
-|---|---|---|
-| _[Your Name]_ | _[e.g. Team Lead / ML Engineer]_ | [@handle](https://github.com/) |
-| _[Your Name]_ | _[e.g. Data Engineer]_ | [@handle](https://github.com/) |
-| _[Your Name]_ | _[e.g. Frontend Developer]_ | [@handle](https://github.com/) |
-| _[Your Name]_ | _[e.g. Geospatial/ML]_ | [@handle](https://github.com/) |
+<tr>
+<td>Madhav Kedia</td>
+<td>
+<a href="https://www.linkedin.com/">
+<img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" width="16"/>
+LinkedIn
+</a>
+</td>
+</tr>
+
+<tr>
+<td>Jacob Sadeesh Palet</td>
+<td>
+<a href="https://www.linkedin.com/">
+<img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" width="16"/>
+LinkedIn
+</a>
+</td>
+</tr>
+</table>
 
 ## License
 
@@ -282,5 +398,19 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## Acknowledgments
 
-- Built for **[Hackathon Name]** — Theme: *Poor Visibility on Parking-Induced Congestion*
+- Built for **Gridlock Hackathon 2.0** — Theme: *Poor Visibility on Parking-Induced Congestion*
 - Dataset: Bengaluru Traffic Police parking-violation records
+
+<h2>👤 Author</h2>
+<p>
+  <b>Rohit Manoj Nair</b>
+</p>
+<p>
+  <img src="https://img.icons8.com/color/24/gmail.png" width="20"/> 
+  Email: rohitmknair@gmail.com
+</p>
+
+<p>
+  <img src="https://img.icons8.com/color/24/linkedin.png" width="20"/> 
+  LinkedIn: https://www.linkedin.com/in/rohit-manoj/
+</p>
