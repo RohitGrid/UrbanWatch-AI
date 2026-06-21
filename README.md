@@ -172,7 +172,7 @@ Each raw signal is **robust min-max scaled** (5th–95th percentile clipping, so
 Output: `junction_csi_clean.csv` — the ranked top-20 list (with all 4 component scores + final CSI) that powers the **Hotspot Analysis**, **Enforcement**, and **Congestion Intelligence** tabs.
 
 ### 3. Hotspot Prediction Model — `notebooks/hotspot_predictor_training.ipynb`
-
+<img src="assets/rf_confidence_scatter.png" class="scatter-image">
 A supervised model that answers *"how many violations should I expect at zone X, on day D, at hour H?"*
 
 - Selects the **top 20 zones by raw violation volume**, then builds a fully-enumerated training table: 20 zones × 7 days × 24 hours = 3,360 rows, with cyclical `sin`/`cos` encodings for hour-of-day and day-of-week so the model understands that 23:00 and 00:00 are adjacent.
