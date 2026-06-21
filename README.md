@@ -22,11 +22,27 @@
 
 ## Problem Statement
 
-**Theme: Poor Visibility on Parking-Induced Congestion**
+<table>
+<tr>
 
-Illegal and spillover on-street parking near commercial strips, metro stations, and event venues regularly chokes carriageways and intersections — but enforcement today is patrol-based and reactive. There's no map connecting *where* violations happen to *how much congestion* they actually cause, which makes it hard to know where to send limited officers and tow trucks first.
+<td width="140" align="center" valign="top">
+
+<img src="assets/image1.png" width="120">
+
+</td>
+
+<td valign="top">
+
+### Theme: Poor Visibility on Parking-Induced Congestion
+
+Illegal and spillover on-street parking near commercial strips, metro stations, and event venues regularly chokes carriageways and intersections — but enforcement today is patrol-based and reactive. There's no map connecting where violations happen to how much congestion they actually cause, which makes it hard to know where to send limited officers and tow trucks first.
 
 **Our question:** how can AI-driven parking intelligence detect illegal-parking hotspots and quantify their traffic-flow impact, so enforcement can be targeted instead of random?
+
+</td>
+
+</tr>
+</table>
 
 ## What We Built
 
