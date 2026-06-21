@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UrbanWatch AI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0A0F1F;color:#fff;font-family:'Inter',system-ui,sans-serif;min-height:100vh}
+:root{
+  --bg:#0A0F1F;--card:#131A2E;--card2:#1B2440;
+  --blue:#3B82F6;--cyan:#22D3EE;--red:#EF4444;
+  --orange:#F59E0B;--green:#22C55E;--text:#E2E8F0;--muted:#64748B
+}
+.nav{display:flex;align-items:center;gap:0;background:#131A2E;border-bottom:1px solid rgba(59,130,246,0.2);padding:0 24px;position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.nav-logo{display:flex;align-items:center;gap:10px;padding:16px 24px 16px 0;border-right:1px solid rgba(255,255,255,0.08);margin-right:8px}
+.logo-img{
+    width:32px;
+    height:32px;
+    object-fit:contain;
+    border-radius:8px;}
+.logo-text{font-size:15px;font-weight:700;background:linear-gradient(135deg,#3B82F6,#22D3EE);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-tab{padding:18px 14px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.live-badge{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--green);background:rgba(34,197,94,0.1);padding:4px 10px;border-radius:20px;border:1px solid rgba(34,197,94,0.3)}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* PAGE SYSTEM */
+.page{display:none}.page.active{display:block}
+
+.main{padding:24px;max-width:1400px;margin:0 auto}
+.section-title{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px}
+.section-heading{font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px}
+.section-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:28px}
+.kpi-card{background:var(--card);border:1px solid rgba(59,130,246,0.15);border-radius:12px;padding:16px;position:relative;overflow:hidden;transition:border-color .2s}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--blue),var(--cyan))}
+.kpi-card:hover{border-color:rgba(59,130,246,0.4)}
+.kpi-label{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px}
+.kpi-val{font-size:28px;font-weight:700;color:#fff;line-height:1}
+.kpi-trend{display:flex;align-items:center;gap:4px;margin-top:6px;font-size:12px}
+.trend-up{color:var(--green)}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.kpi-card.critical::before{background:linear-gradient(90deg,var(--red),#ff6b6b)}
+.kpi-card.warning::before{background:linear-gradient(90deg,var(--orange),#fcd34d)}
+.kpi-card.success::before{background:linear-gradient(90deg,var(--green),#86efac)}
+
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
+.chart-card{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px}
+.chart-card.wide{grid-column:span 2}
+.chart-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.chart-sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+
+.hotspot-table{width:100%;border-collapse:collapse;font-size:13px}
+.hotspot-table th{padding:10px 14px;text-align:left;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.8px;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,0.06)}
+.hotspot-table td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text)}
+.hotspot-table tr:hover td{background:rgba(59,130,246,0.05)}
+.rank-badge{width:24px;height:24px;background:var(--card2);border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:var(--blue)}
+.priority-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;display:inline-block}
+.p-critical{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3)}
+.p-high{background:rgba(245,158,11,0.15);color:var(--orange);border:1px solid rgba(245,158,11,0.3)}
+.p-medium{background:rgba(234,179,8,0.15);color:#EAB308;border:1px solid rgba(234,179,8,0.3)}
+.p-low{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3)}
+
+.map-container{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:12px;overflow:hidden;margin-bottom:28px}
+.map-header{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between}
+.map-title{font-size:14px;font-weight:600;color:var(--text)}
+.map-canvas{height:420px;position:relative;background:#0D1627;overflow:hidden}
+#heatmapCanvas{position:absolute;top:0;left:0;width:100%;height:100%}
+.map-legend{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.legend-bar{width:120px;height:8px;border-radius:4px;background:linear-gradient(90deg,#22C55E,#F59E0B,#EF4444)}
+.map-tooltip{position:absolute;background:rgba(19,26,46,0.95);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:10px 14px;font-size:12px;pointer-events:none;display:none;z-index:10;min-width:160px}
+.map-tooltip .t-name{font-weight:600;color:var(--text);margin-bottom:4px}
+.map-tooltip .t-row{display:flex;justify-content:space-between;gap:16px;color:var(--muted);margin-top:2px}
+.map-tooltip .t-val{color:var(--text);font-weight:500}
+
+.csi-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
+.csi-card{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px}
+.csi-formula{background:var(--card2);border-radius:10px;padding:16px;margin-bottom:16px;font-size:13px}
+.formula-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--muted)}
+.formula-row:last-child{margin-bottom:0}
+.formula-weight{font-size:18px;font-weight:700;color:var(--blue);min-width:40px}
+.formula-bar-wrap{width:100px;background:rgba(255,255,255,0.06);border-radius:4px;height:4px}
+.formula-bar{height:4px;border-radius:4px;background:var(--blue)}
+.csi-breakdown{display:grid;gap:10px}
+.csi-item{display:flex;align-items:center;gap:12px}
+.csi-item-label{font-size:12px;color:var(--muted);width:160px;flex-shrink:0}
+.csi-bar-wrap{flex:1;background:rgba(255,255,255,0.06);border-radius:4px;height:6px}
+.csi-bar-fill{height:6px;border-radius:4px;transition:width .6s}
+.csi-item-val{font-size:13px;font-weight:600;color:var(--text);min-width:28px;text-align:right}
+.csi-score{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.csi-big{font-size:48px;font-weight:700;color:var(--red)}
+
+.enf-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
+.enf-card{background:var(--card);border-radius:12px;padding:20px;position:relative;overflow:hidden}
+.enf-card.enf-critical{border:1px solid rgba(239,68,68,0.3);border-top:3px solid var(--red)}
+.enf-card.enf-high{border:1px solid rgba(245,158,11,0.3);border-top:3px solid var(--orange)}
+.enf-card.enf-medium{border:1px solid rgba(234,179,8,0.2);border-top:3px solid #EAB308}
+.enf-name{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px}
+.enf-csi{font-size:12px;color:var(--muted);margin-bottom:12px}
+.enf-resources{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.res-chip{display:flex;align-items:center;gap:4px;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.res-officer{background:rgba(59,130,246,0.15);color:var(--blue);border:1px solid rgba(59,130,246,0.3)}
+.res-tow{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3)}
+.res-barricade{background:rgba(245,158,11,0.15);color:var(--orange);border:1px solid rgba(245,158,11,0.3)}
+.enf-reason{font-size:12px;color:var(--muted);line-height:1.5;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;margin-top:4px}
+
+.res-alloc{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;margin-bottom:28px}
+.res-avail{background:var(--card2);border-radius:8px;padding:12px 20px;display:flex;align-items:center;gap:12px}
+.res-avail-val{font-size:24px;font-weight:700;color:var(--text)}
+.res-avail-label{font-size:12px;color:var(--muted)}
+.alloc-list{display:grid;gap:10px}
+.alloc-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--card2);border-radius:8px}
+.alloc-name{font-size:13px;font-weight:600;color:var(--text);width:150px}
+.alloc-bar-wrap{flex:1;background:rgba(255,255,255,0.06);border-radius:4px;height:6px}
+.alloc-bar-fill{height:6px;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--cyan))}
+.alloc-chips{display:flex;gap:6px;flex-wrap:wrap}
+
+.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}
+.insight-card{background:var(--card);border:1px solid rgba(59,130,246,0.1);border-radius:12px;padding:16px;display:flex;gap:12px;align-items:flex-start}
+.ai-icon{width:32px;height:32px;background:linear-gradient(135deg,rgba(59,130,246,0.2),rgba(34,211,238,0.2));border:1px solid rgba(59,130,246,0.3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.insight-text{font-size:13px;color:var(--text);line-height:1.6}
+.insight-tag{font-size:10px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+
+.sim-card{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;margin-bottom:28px}
+.sim-controls{display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.sim-label{font-size:13px;color:var(--muted)}
+.slider-wrap{flex:1;display:flex;align-items:center;gap:12px}
+input[type=range]{-webkit-appearance:none;flex:1;height:4px;background:var(--card2);border-radius:4px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--blue);border-radius:50%;cursor:pointer}
+.sim-pct{font-size:14px;font-weight:700;color:var(--blue);min-width:36px}
+.sim-compare{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.sim-box{background:var(--card2);border-radius:10px;padding:16px;text-align:center}
+.sim-box-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.sim-csi-val{font-size:40px;font-weight:700}
+.sim-desc{font-size:12px;color:var(--muted);margin-top:6px}
+.sim-change{font-size:13px;font-weight:600;color:var(--green);margin-top:8px}
+.section-divider{margin:8px 0 24px;border:none;border-top:1px solid rgba(255,255,255,0.06)}
+
+/* ── AI TOOL PAGES ── */
+.tool-layout{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
+.tool-panel{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;position:sticky;top:72px}
+.tool-panel-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px}
+.tool-panel-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
+.field-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;margin-top:14px}
+.field-label:first-child{margin-top:0}
+select,input[type=number]{width:100%;background:var(--card2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--text);padding:9px 12px;font-size:13px;outline:none;transition:border-color .2s;-webkit-appearance:none}
+select:focus,input[type=number]:focus{border-color:var(--blue)}
+.hour-display{font-size:22px;font-weight:700;color:var(--blue);text-align:center;margin:6px 0 2px}
+.hour-label{font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--card2);border-radius:8px;font-size:13px;color:var(--text)}
+.toggle{position:relative;width:36px;height:20px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:rgba(255,255,255,0.1);border-radius:20px;transition:.3s}
+.toggle-slider:before{content:'';position:absolute;height:14px;width:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
+.toggle input:checked+.toggle-slider{background:var(--blue)}
+.toggle input:checked+.toggle-slider:before{transform:translateX(16px)}
+.run-btn{width:100%;margin-top:18px;padding:11px;background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .2s}
+.run-btn:hover{opacity:.9}
+.run-btn:active{opacity:.75}
+
+.results-area{min-height:400px}
+.results-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;gap:12px;color:var(--muted);font-size:14px;background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:12px}
+.results-placeholder .icon{font-size:40px;opacity:.4}
+
+.result-map-frame{width:100%;height:400px;border:none;border-radius:12px;display:block}
+.result-section{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;margin-bottom:16px}
+.result-section-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;border-left:3px solid var(--blue);padding-left:10px}
+
+.severity-box{border-radius:12px;padding:20px 24px;margin-bottom:16px}
+.severity-box.sev-high{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3)}
+.severity-box.sev-medium{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3)}
+.severity-box.sev-low{background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3)}
+.sev-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+.sev-badge{font-size:28px;font-weight:800;margin-bottom:4px}
+.sev-badge.high{color:var(--red)}
+.sev-badge.medium{color:var(--orange)}
+.sev-badge.low{color:var(--green)}
+.sev-conf{font-size:13px;color:var(--muted)}
+.sev-conf span{color:var(--text);font-weight:600}
+.sev-action{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);font-size:13px;color:var(--text);line-height:1.6}
+.sev-zone{margin-top:10px;font-size:12px;color:var(--muted);line-height:1.7}
+
+.zone-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.zone-kpi{background:var(--card2);border-radius:10px;padding:14px;text-align:center}
+.zone-kpi-val{font-size:26px;font-weight:700;color:var(--blue)}
+.zone-kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:4px}
+
+.data-table{width:100%;border-collapse:collapse;font-size:12px}
+.data-table th{padding:8px 12px;text-align:left;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.8px;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,0.06)}
+.data-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text)}
+.data-table tr:hover td{background:rgba(59,130,246,0.05)}
+
+.zone-filter-row{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.zone-filter-row select{width:auto;min-width:160px}
+.zone-filter-row label{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;cursor:pointer}
+
+.pred-map-wrap{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.pred-map-inner{height:380px;position:relative;background:#070A12}
+#predMap,#anMap{position:absolute;top:0;left:0;width:100%;height:100%;background:#070A12}
+
+/* Dark "black map with roads" theme for Leaflet (CartoDB Dark Matter tiles) */
+.leaflet-container{background:#070A12 !important;font-family:'Inter',system-ui,sans-serif}
+.leaflet-control-zoom a{background:var(--card2) !important;color:var(--text) !important;border-color:rgba(255,255,255,0.08) !important}
+.leaflet-control-zoom a:hover{background:var(--card) !important}
+.leaflet-control-attribution{background:rgba(13,22,39,0.75) !important;color:var(--muted) !important;font-size:10px !important}
+.leaflet-control-attribution a{color:var(--blue) !important}
+
+/* Numbered zone markers drawn on top of the static map */
+.pred-zone-marker{background:transparent !important;border:none !important}
+.pzm-glow{position:absolute;border-radius:50%;background:radial-gradient(circle,var(--mc) 0%,rgba(0,0,0,0) 70%);opacity:.35;pointer-events:none}
+.pzm-dot{position:absolute;border-radius:50%;background:var(--mc);border:1.5px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;box-shadow:0 0 10px var(--mc);cursor:pointer}
+
+/* Hover tooltip styled to match the rest of the dashboard */
+.leaflet-tooltip.pred-leaflet-tooltip{background:rgba(19,26,46,0.95);color:var(--text);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:8px 12px;font-size:12px;line-height:1.6;box-shadow:0 4px 12px rgba(0,0,0,0.4)}
+.leaflet-tooltip.pred-leaflet-tooltip:before{display:none}
+.pred-leaflet-tooltip .tt-k{color:var(--muted)}
+
+canvas{display:block}
+@media(max-width:900px){
+  .kpi-grid{grid-template-columns:repeat(3,1fr)}
+  .chart-grid{grid-template-columns:1fr}.chart-card.wide{grid-column:span 1}
+  .csi-grid,.enf-grid,.insight-grid,.sim-compare{grid-template-columns:1fr}
+  .tool-layout{grid-template-columns:1fr}
+  .tool-panel{position:static}
+  .zone-kpis{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">
+    <img src="assets/urbanwatch-logo.png" alt="UrbanWatch AI Logo" class="logo-img">
+    <span class="logo-text">UrbanWatch AI</span>
+</div>
+  <div class="nav-tab active" onclick="showPage('dashboard',this)">Dashboard</div>
+  <div class="nav-tab" onclick="showPage('hotspots-page',this)">Hotspot Analysis</div>
+  <div class="nav-tab" onclick="showPage('heatmap-page',this)">Heatmap</div>
+  <div class="nav-tab" onclick="showPage('csi-page',this)">Congestion Intelligence</div>
+  <div class="nav-tab" onclick="showPage('enforcement-page',this)">Enforcement</div>
+  <div class="nav-tab" onclick="showPage('predictor-page',this)">🔮 Hotspot Predictor</div>
+  <div class="nav-tab" onclick="showPage('analyser-page',this)">⚠️ Violation Analyser</div>
+  <div class="nav-tab" onclick="showPage('zone-page',this)">📋 Zone Report</div>
+  <div class="nav-tab" onclick="showPage('simulation-page',this)">What-If</div>
+  <div class="nav-right">
+    <div class="live-badge"><span class="live-dot"></span>Live</div>
+    <div style="font-size:12px;color:var(--muted)" id="navTime"></div>
+  </div>
+</nav>
+
+<!-- ═══════════════ PAGE: DASHBOARD ═══════════════ -->
+<div id="dashboard" class="page active">
+<div class="main">
+  <div style="padding-top:8px">
+    <div class="section-title">Command Overview</div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Total Violations</div><div class="kpi-val">298,450</div><div class="kpi-trend trend-up"><span>↑</span> +12% this month</div></div>
+      <div class="kpi-card warning"><div class="kpi-label">Active Hotspots</div><div class="kpi-val">20</div><div class="kpi-sub" style="color:#F59E0B;font-size:11px;margin-top:6px">▲ 3 new today</div></div>
+      <div class="kpi-card critical"><div class="kpi-label">Critical Zones</div><div class="kpi-val">4</div><div class="kpi-sub" style="color:var(--red);font-size:11px;margin-top:6px">Immediate action required</div></div>
+      <div class="kpi-card"><div class="kpi-label">Avg. CSI Score</div><div class="kpi-val">58.4<span style="font-size:16px;color:var(--muted)">/100</span></div><div class="kpi-trend" style="color:var(--orange)"><span>● HIGH severity</span></div></div>
+      <div class="kpi-card success"><div class="kpi-label">Officer Deployments</div><div class="kpi-val">34</div><div class="kpi-sub" style="color:var(--green);font-size:11px;margin-top:6px">16 available</div></div>
+      <div class="kpi-card success"><div class="kpi-label">Avg Response Time</div><div class="kpi-val">8.4<span style="font-size:16px;color:var(--muted)">h</span></div><div class="kpi-sub" style="color:var(--green);font-size:11px;margin-top:6px">Enforcement review lag</div></div>
+    </div>
+  </div>
+  <div class="section-title" style="margin-top:8px">Parking Violation Analytics</div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-title">Violation Type Distribution</div>
+      <div class="chart-sub">Breakdown by category</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94A3B8"><span style="width:8px;height:8px;border-radius:2px;background:#3B82F6;display:inline-block"></span>No Parking 31%</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94A3B8"><span style="width:8px;height:8px;border-radius:2px;background:#22D3EE;display:inline-block"></span>Wrong Parking 24%</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94A3B8"><span style="width:8px;height:8px;border-radius:2px;background:#EF4444;display:inline-block"></span>Double Parking 19%</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94A3B8"><span style="width:8px;height:8px;border-radius:2px;background:#F59E0B;display:inline-block"></span>Footpath 16%</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94A3B8"><span style="width:8px;height:8px;border-radius:2px;background:#22C55E;display:inline-block"></span>Main Road 10%</span>
+      </div>
+      <div style="position:relative;height:260px"><canvas id="pieChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Vehicle Type Analysis</div>
+      <div class="chart-sub">Violations by vehicle category</div>
+      <div style="position:relative;height:260px"><canvas id="barChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Violations by Day of Week</div>
+      <div class="chart-sub">All 298,450 records · Nov 2023 - Apr 2024</div>
+      <div style="position:relative;height:260px"><canvas id="dowChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Violation Trend Over Time</div>
+      <div class="chart-sub">Daily violation count — last 30 days</div>
+      <div style="position:relative;height:260px"><canvas id="lineChart"></canvas></div>
+    </div>
+    <div class="chart-card wide">
+      <div class="chart-title">Top 15 Police Stations by Violation Count</div>
+      <div class="chart-sub">Jurisdiction-level totals, ranked</div>
+      <div style="position:relative;height:400px"><canvas id="stationChart"></canvas></div>
+    </div>
+  </div>
+  <hr class="section-divider">
+  <div style="text-align:center;padding:20px 0">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Explore AI-powered analysis</div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button onclick="showPage('predictor-page',null)" style="padding:10px 20px;background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer">🔮 Hotspot Predictor</button>
+      <button onclick="showPage('analyser-page',null)" style="padding:10px 20px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:8px;color:var(--orange);font-size:13px;font-weight:600;cursor:pointer">⚠️ Violation Analyser</button>
+      <button onclick="showPage('zone-page',null)" style="padding:10px 20px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:8px;color:var(--green);font-size:13px;font-weight:600;cursor:pointer">📋 Zone Report</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════ PAGE: HOTSPOT ANALYSIS ═══════════════ -->
+<div id="hotspots-page" class="page">
+<div class="main">
+  <div class="section-title">Hotspot Intelligence</div>
+  <div class="section-heading">Top Enforcement Hotspots</div>
+  <div class="section-sub">Ranked by violation severity and frequency — updated in real time</div>
+  <div class="chart-card" style="margin-bottom:28px;padding:0">
+    <div style="overflow-x:auto">
+    <table class="hotspot-table">
+      <thead><tr><th>Rank</th><th>Location</th><th>Violations</th><th>CSI Score</th><th>Priority</th><th>Recommended Action</th></tr></thead>
+      <tbody id="hotspotBody"></tbody>
+    </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════ PAGE: HEATMAP ═══════════════ -->
+<div id="heatmap-page" class="page">
+<div class="main">
+  <div class="section-title">Live Spatial Intelligence</div>
+  <div class="section-heading">City Violation Heatmap</div>
+  <div class="section-sub">Real-time density mapping across 847 monitored zones</div>
+  <div class="map-container">
+    <div class="map-header">
+      <span class="map-title">🗺 City-wide Parking Congestion Map</span>
+      <div class="map-legend">
+        <span style="font-size:12px;color:var(--muted);margin-right:4px">Low</span>
+        <div class="legend-bar"></div>
+        <span style="font-size:12px;color:var(--muted);margin-left:4px">High</span>
+      </div>
+    </div>
+    <div class="map-canvas" style="height:700px;">
+    <iframe
+        src="./parking_hotspot_map.html"
+        style="width:100%;height:100%;border:none;border-radius:12px;">
+    </iframe>
+</div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════ PAGE: CSI ═══════════════ -->
+<div id="csi-page" class="page">
+  <div class="main">
+    <div class="section-title">AI-Derived Metric</div>
+    <div class="section-heading">Congestion Severity Index (CSI)</div>
+    <div class="section-sub">Composite AI metric (0–100) combining four weighted signals</div>
+    
+    <div class="csi-grid" style="align-items: stretch;">
+      
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        
+        <div class="csi-card" style="flex: 1;">
+          <div class="chart-title" style="margin-bottom:4px">CSI Formula</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Weighted composite model</div>
+          <div class="csi-formula">
+            <div class="formula-row"><span class="formula-weight">40%</span><span class="formula-label" style="flex:1">Parking Violation Density</span><div class="formula-bar-wrap"><div class="formula-bar" style="width:80%"></div></div></div>
+            <div class="formula-row"><span class="formula-weight">25%</span><span class="formula-label" style="flex:1">Repeat Violation Frequency</span><div class="formula-bar-wrap"><div class="formula-bar" style="width:50%"></div></div></div>
+            <div class="formula-row"><span class="formula-weight">20%</span><span class="formula-label" style="flex:1">Peak Hour Violation Rate</span><div class="formula-bar-wrap"><div class="formula-bar" style="width:40%"></div></div></div>
+            <div class="formula-row"><span class="formula-weight">15%</span><span class="formula-label" style="flex:1">Main Road/Footpath Weight</span><div class="formula-bar-wrap"><div class="formula-bar" style="width:30%"></div></div></div>
+          </div>
+          <div style="position:relative;height:200px;margin-top:8px"><canvas id="csiRadar"></canvas></div>
+        </div>
+
+        <div class="csi-card" style="background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.15); display:flex; align-items:center; padding:24px;">
+          <div style="font-size:13px; color:#FCA5A5; line-height:1.7;">
+            ⚠ This zone requires <strong>immediate enforcement action</strong>. High violation density combined with peak-hour footpath blocking creates critical road obstruction.
+          </div>
+        </div>
+
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+
+        <div class="csi-card" style="padding-bottom: 24px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <div>
+              <div class="chart-title">Live CSI Breakdown</div>
+              <div id="csiZoneText" style="font-size:12px;color:var(--muted);margin-top:4px">Metro Station</div>
+            </div>
+            <select id="csiLocation" onchange="updateCSI()" style="padding:8px 12px;border-radius:8px;background:#111827;color:white;border:1px solid #334155"></select>
+          </div>
+
+          <div class="csi-score">
+              <div>
+                  <div class="csi-big" id="csiScoreValue">95</div>
+                  <div style="font-size:13px;color:var(--muted)">Final CSI Score</div>
+              </div>
+              <span id="csiPriority" class="priority-badge p-critical" style="font-size:13px;padding:6px 14px">CRITICAL</span>
+          </div>
+
+          <div class="csi-breakdown">
+              <div class="csi-item">
+                  <span class="csi-item-label">Violation Density (<span id="densityPct">95%</span>)</span>
+                  <div class="csi-bar-wrap"><div id="barDensity" class="csi-bar-fill" style="width:95%;background:#EF4444"></div></div>
+                  <span id="valDensity" class="csi-item-val">38</span>
+              </div>
+              <div class="csi-item">
+                  <span class="csi-item-label">Repeat Violations (<span id="repeatPct">90%</span>)</span>
+                  <div class="csi-bar-wrap"><div id="barRepeat" class="csi-bar-fill" style="width:96%;background:#F59E0B"></div></div>
+                  <span id="valRepeat" class="csi-item-val">24</span>
+              </div>
+              <div class="csi-item">
+                  <span class="csi-item-label">Peak Hour Impact (<span id="peakPct">92%</span>)</span>
+                  <div class="csi-bar-wrap"><div id="barPeak" class="csi-bar-fill" style="width:90%;background:#3B82F6"></div></div>
+                  <span id="valPeak" class="csi-item-val">18</span>
+              </div>
+              <div class="csi-item">
+                 <span class="csi-item-label">Road Blocking (<span id="roadPct">96%</span>)</span>
+                  <div class="csi-bar-wrap"><div id="barRoad" class="csi-bar-fill" style="width:100%;background:#22D3EE"></div></div>
+                  <span id="valRoad" class="csi-item-val">15</span>
+              </div>
+          </div>
+        </div>
+
+        <div class="csi-card" style="flex: 1; display: flex; flex-direction: column;">
+          <div class="chart-title" style="margin-bottom:4px; font-size:14px">Parking Type Severity Weights</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Extra parameters used for road weight indexing</div>
+          
+          <div class="csi-formula" style="background:rgba(255,255,255,0.015); margin-bottom:0; padding:16px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="formula-row" style="margin-bottom:10px">
+              <span class="formula-weight" style="color:var(--red); min-width:32px;">10</span>
+              <span class="formula-label" style="flex:1; color:var(--text)">Main Road Parking</span>
+              <div class="formula-bar-wrap" style="width:80px;"><div class="formula-bar" style="width:100%;background:var(--red)"></div></div>
+            </div>
+            <div class="formula-row" style="margin-bottom:10px">
+              <span class="formula-weight" style="color:var(--red); min-width:32px;">10</span>
+              <span class="formula-label" style="flex:1; color:var(--text)">Parking Near Road Crossing</span>
+              <div class="formula-bar-wrap" style="width:80px;"><div class="formula-bar" style="width:100%;background:var(--red)"></div></div>
+            </div>
+            <div class="formula-row" style="margin-bottom:10px">
+              <span class="formula-weight" style="color:var(--orange); min-width:32px;">9</span>
+              <span class="formula-label" style="flex:1; color:var(--text)">Double Parking</span>
+              <div class="formula-bar-wrap" style="width:80px;"><div class="formula-bar" style="width:90%;background:var(--orange)"></div></div>
+            </div>
+            <div class="formula-row" style="margin-bottom:10px">
+              <span class="formula-weight" style="color:var(--orange); min-width:32px;">8</span>
+              <span class="formula-label" style="flex:1; color:var(--text)">Footpath Parking</span>
+              <div class="formula-bar-wrap" style="width:80px;"><div class="formula-bar" style="width:80%;background:var(--orange)"></div></div>
+            </div>
+            <div class="formula-row" style="margin-bottom:10px">
+              <span class="formula-weight" style="color:var(--blue); min-width:32px;">6</span>
+              <span class="formula-label" style="flex:1; color:var(--text)">Wrong Parking</span>
+              <div class="formula-bar-wrap" style="width:80px;"><div class="formula-bar" style="width:60%;background:var(--blue)"></div></div>
+            </div>
+            <div class="formula-row" style="margin-bottom:0">
+              <span class="formula-weight" style="color:var(--cyan); min-width:32px;">5</span>
+              <span class="formula-label" style="flex:1; color:var(--text)">No Parking</span>
+              <div class="formula-bar-wrap" style="width:80px;"><div class="formula-bar" style="width:50%;background:var(--cyan)"></div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div style="margin-bottom:28px; margin-top:28px;">
+      <div class="insight-grid">
+        <div class="insight-card"><div class="ai-icon">🧠</div><div><div class="insight-tag">Hotspot Concentration</div><div class="insight-text">Metro Station accounts for <strong style="color:var(--blue)">32%</strong> of all parking-related congestion city-wide, driven by high commuter turnover and insufficient designated parking.</div></div></div>
+        <div class="insight-card"><div class="ai-icon">🕐</div><div><div class="insight-tag">Peak Hour Analysis</div><div class="insight-text">Most parking violations cluster between <strong style="color:var(--orange)">5 PM and 8 PM</strong> on weekdays, correlating with office egress and commercial delivery windows.</div></div></div>
+        <div class="insight-card"><div class="ai-icon">📈</div><div><div class="insight-tag">Trend Detection</div><div class="insight-text">Footpath parking violations have increased <strong style="color:var(--red)">14%</strong> compared to last month, particularly near street-level retail on Market Road.</div></div></div>
+        <div class="insight-card"><div class="ai-icon">🎯</div><div><div class="insight-tag">Concentration Risk</div><div class="insight-text">Just <strong style="color:var(--cyan)">three locations</strong> — Metro Station, Market Road, and Mall Area — account for over 60% of total congestion impact across the monitored network.</div></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- ═══════════════ PAGE: ENFORCEMENT ═══════════════ -->
+<div id="enforcement-page" class="page">
+<div class="main">
+  <div class="section-title">AI Recommendation Engine</div>
+  <div class="section-heading">Enforcement Recommendations</div>
+  <div class="section-sub">Dynamically generated based on live CSI scores — deploy resources efficiently</div>
+  <div class="enf-grid" id="enfGrid"></div>
+  <div class="section-title">Resource Allocation</div>
+  <div class="res-alloc">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+    <div>
+      <div class="chart-title">Optimal Resource Distribution</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">Auto-computed from CSI scores and priority levels</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <div class="res-avail" style="gap:16px">
+        <span style="font-size:20px">👮</span>
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">OFFICERS AVAILABLE</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button onclick="adjustRes('officers',-1)" style="width:28px;height:28px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#fff;font-size:16px;cursor:pointer;line-height:1">−</button>
+            <span id="officers-val" class="res-avail-val" style="min-width:32px;text-align:center">30</span>
+            <button onclick="adjustRes('officers',1)" style="width:28px;height:28px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#fff;font-size:16px;cursor:pointer;line-height:1">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="res-avail" style="gap:16px">
+        <span style="font-size:20px">🚚</span>
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">TOW TRUCKS AVAILABLE</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button onclick="adjustRes('tow',-1)" style="width:28px;height:28px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#fff;font-size:16px;cursor:pointer;line-height:1">−</button>
+            <span id="tow-val" class="res-avail-val" style="min-width:32px;text-align:center">10</span>
+            <button onclick="adjustRes('tow',1)" style="width:28px;height:28px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#fff;font-size:16px;cursor:pointer;line-height:1">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="alloc-status" style="display:flex;gap:16px;margin-bottom:16px;padding:12px 16px;background:var(--card2);border-radius:10px;font-size:13px;flex-wrap:wrap">
+    <span>👮 Deployed: <strong id="officers-deployed" style="color:var(--blue)">0</strong> / <strong id="officers-total" style="color:var(--text)">50</strong></span>
+    <span>🚚 Deployed: <strong id="tow-deployed" style="color:var(--blue)">0</strong> / <strong id="tow-total" style="color:var(--text)">10</strong></span>
+    <span id="alloc-warn" style="color:var(--red);display:none">⚠️ Insufficient resources — some zones under-allocated</span>
+    <span id="alloc-ok" style="color:var(--green);display:none">✅ All critical and high zones covered</span>
+  </div>
+  <div class="alloc-list" id="allocList"></div>
+</div>
+</div>
+</div>
+
+<!-- ═══════════════ PAGE: HOTSPOT PREDICTOR ═══════════════ -->
+<div id="predictor-page" class="page">
+<div class="main">
+  <div class="section-title">AI Model 1</div>
+  <div class="section-heading">Hotspot Predictor</div>
+  <div class="section-sub">Select a day and hour — AI predicts which zones will be high-risk based on historical patterns</div>
+  <div class="tool-layout">
+
+    <!-- LEFT: Controls -->
+    <div class="tool-panel">
+      <div class="tool-panel-title">Prediction Parameters</div>
+      <div class="tool-panel-sub">Choose when you want to predict</div>
+
+      <div class="field-label">Day of Week</div>
+      <select id="pred-day">
+        <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+        <option>Thursday</option><option selected>Friday</option>
+        <option>Saturday</option><option>Sunday</option>
+      </select>
+
+      <div class="field-label">Hour of Day</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="range"
+         min="0"
+         max="23"
+         value="9"
+         id="pred-hour"
+         style="flex:1"
+         oninput="
+            const h=parseInt(this.value);
+            document.getElementById('pred-hour-val').textContent=h+':00';
+            document.getElementById('pred-hour-sub').textContent=
+              h<12 ? 'Morning' :
+              h<17 ? 'Afternoon' :
+              'Evening Peak';
+         ">
+        <button onclick="setNowPredictor()" style="padding:8px 14px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:8px;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">Now</button>
+      </div>
+      <div class="hour-display" id="pred-hour-val">9:00</div>
+      <div class="hour-label" id="pred-hour-sub">Morning</div>
+
+           <button class="run-btn" onclick="runHotspotPredictor()">🔍 Predict Hotspots</button>
+      <div id="pred-summary" style="display:none;margin-top:16px;padding:12px;background:var(--card2);border-radius:8px;font-size:12px;color:var(--muted);line-height:1.8"></div>
+    </div>
+
+    <!-- RIGHT: Results -->
+    <div class="results-area" id="pred-results">
+      <div class="results-placeholder">
+        <div class="icon">🔮</div>
+        <div>Select parameters and click <strong>Predict Hotspots</strong></div>
+        <div style="font-size:12px">Results will appear here and persist while you change settings</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════ PAGE: VIOLATION ANALYSER ═══════════════ -->
+<div id="analyser-page" class="page">
+<div class="main">
+  <div class="section-title">AI Model 2</div>
+  <div class="section-heading">Violation Severity Analyser</div>
+  <div class="section-sub">Enter violation details — AI predicts congestion impact severity and recommends action</div>
+  <div class="tool-layout">
+
+    <!-- LEFT: Controls -->
+    <div class="tool-panel">
+      <div class="tool-panel-title">Violation Details</div>
+      <div class="tool-panel-sub">Enter the incident report fields below</div>
+
+      <div class="field-label">Violation Type</div>
+      <select id="an-viol">
+        <option>WRONG PARKING</option>
+        <option>NO PARKING</option>
+        <option>PARKING NEAR ROAD CROSSING</option>
+        <option>PARKING IN A MAIN ROAD</option>
+        <option>PARKING ON FOOTPATH</option>
+        <option>DOUBLE PARKING</option>
+      </select>
+
+      <div class="field-label">Vehicle Type</div>
+      <select id="an-vtype">
+        <option>CAR</option><option>MOTOR CYCLE</option><option>SCOOTER</option>
+        <option>AUTO RICKSHAW</option><option>TANKER</option><option>VAN</option>
+        <option>MAXI-CAB</option><option>PASSENGER AUTO</option><option>TRUCK</option>
+      </select>
+
+      <div class="field-label">Hour of Violation</div>
+     <div style="display:flex;align-items:center;gap:8px">
+        <input type="range" min="0" max="23" value="9" id="an-hour" style="flex:1" oninput="document.getElementById('an-hour-val').textContent=this.value+':00'">
+        <button onclick="setNowAnalyser()" style="padding:8px 14px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:8px;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">Now</button>
+      </div>
+      <div class="hour-display" id="an-hour-val">9:00</div>
+      <div class="field-label">Day</div>
+      <select id="an-day">
+        <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+        <option>Thursday</option><option selected>Friday</option>
+        <option>Saturday</option><option>Sunday</option>
+      </select>
+
+      <div class="field-label">Location</div>
+      <input type="number" id="an-lat" value="12.9716" step="0.0001" placeholder="Latitude">
+      <div style="margin-top:6px">
+      <input type="number" id="an-lon" value="77.5946" step="0.0001" placeholder="Longitude">
+      </div>
+
+      <div style="margin-top:12px">
+        <div class="toggle-row">
+          Near a junction?
+          <label class="toggle"><input type="checkbox" id="an-junc"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+
+           <button class="run-btn" onclick="runViolationAnalyser()">🔍 Analyse Severity</button>
+    </div>
+
+    <!-- RIGHT: Results -->
+    <div class="results-area" id="an-results">
+      <div class="results-placeholder">
+        <div class="icon">⚠️</div>
+        <div>Fill in the violation details and click <strong>Analyse Severity</strong></div>
+        <div style="font-size:12px">Results will persist while you adjust inputs</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════ PAGE: ZONE REPORT ═══════════════ -->
+<div id="zone-page" class="page">
+<div class="main">
+  <div class="section-title">Zone Intelligence</div>
+  <div class="section-heading">Zone Enforcement Report</div>
+  <div class="section-sub">Ranked zones by violation density, response time, and resource gaps</div>
+
+  <!-- CHART ALWAYS VISIBLE AT TOP -->
+  <div class="result-section" style="margin-bottom:20px">
+    <div class="result-section-title">Violations vs Enforcement Response Time</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Red = under-resourced (high violations + slow response) · Blue = adequate coverage</div>
+    <div style="position:relative;height:300px"><canvas id="zoneScatter"></canvas></div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="zone-filter-row">
+    <div>
+      <div class="field-label" style="margin-top:0;margin-bottom:4px">Min Violations</div>
+      <input type="range" min="10" max="500" value="50" id="zone-min" oninput="document.getElementById('zone-min-val').textContent=this.value;renderZoneTable()" style="width:160px">
+      <span id="zone-min-val" style="font-size:13px;font-weight:700;color:var(--blue);margin-left:8px">50</span>
+    </div>
+    <div>
+      <div class="field-label" style="margin-top:0;margin-bottom:4px">Sort By</div>
+      <select id="zone-sort" onchange="renderZoneTable()" style="width:180px">
+        <option value="violations">Violation Count</option>
+        <option value="response">Avg Response Time</option>
+        <option value="under">Under-resourced First</option>
+      </select>
+    </div>
+    <label style="margin-top:18px">
+      <input type="checkbox" id="zone-ur-only" onchange="renderZoneTable()"> Show under-resourced only
+    </label>
+    <button onclick="downloadZoneCSV()" style="margin-top:14px;padding:8px 16px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:8px;color:var(--green);font-size:12px;font-weight:600;cursor:pointer">⬇️ Export CSV</button>
+  </div>
+
+  <!-- KPI STRIP -->
+  <div class="zone-kpis" id="zone-kpis">
+    <div class="zone-kpi"><div class="zone-kpi-val" id="zk-zones">—</div><div class="zone-kpi-label">Zones Shown</div></div>
+    <div class="zone-kpi"><div class="zone-kpi-val" id="zk-ur" style="color:var(--red)">—</div><div class="zone-kpi-label">Under-resourced</div></div>
+    <div class="zone-kpi"><div class="zone-kpi-val" id="zk-resp">—</div><div class="zone-kpi-label">Avg Response (hrs)</div></div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="result-section">
+    <div class="result-section-title">Zone Details</div>
+    <div style="overflow-x:auto">
+      <table class="data-table">
+        <thead><tr>
+          <th>#</th><th>Latitude</th><th>Longitude</th>
+          <th>Violations</th><th>Avg Response (hrs)</th>
+          <th>Median Response (hrs)</th><th>Status</th>
+        </tr></thead>
+        <tbody id="zone-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════ PAGE: SIMULATION ═══════════════ -->
+<div id="simulation-page" class="page">
+  <div class="main">
+    <div class="section-title">What-If Scenario Engine</div>
+    <div class="section-heading">Violation Reduction Simulation</div>
+    <div class="section-sub">Explore how enforcement actions reduce congestion severity in real time</div>
+    
+    <div class="sim-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.05);padding-bottom:16px;">
+        <span style="font-weight:600;font-size:14px;color:var(--text)">Target Zone:</span>
+        <select id="simLocation" onchange="updateSim()" style="padding:8px 12px;border-radius:8px;background:#111827;color:white;border:1px solid #334155;font-weight:600;">
+          </select>
+      </div>
+
+      <div class="sim-controls">
+        <span class="sim-label">Simulate violation removal:</span>
+        <div class="slider-wrap">
+          <input type="range" min="0" max="100" value="0" step="5" id="simSlider">
+          <span class="sim-pct" id="simPct">0%</span>
+        </div>
+        <span class="sim-label" style="font-size:12px">violations removed</span>
+      </div>
+      
+      <div class="sim-compare">
+        <div class="sim-box">
+          <div class="sim-box-label">Current CSI</div>
+          <div class="sim-csi-val" id="simCurrentCsi" style="color:var(--red)">—</div>
+          <div class="sim-desc" id="simCurrentDesc">No intervention</div>
+        </div>
+        <div class="sim-box">
+          <div class="sim-box-label">Projected CSI</div>
+          <div class="sim-csi-val" id="simResult" style="color:var(--red)">—</div>
+          <div class="sim-desc" id="simDesc">No violations removed</div>
+          <div class="sim-change" id="simChange" style="display:none"></div>
+        </div>
+      </div>
+      
+      <div style="position:relative;height:180px;margin-top:16px"><canvas id="simChart"></canvas></div>
+    </div>
+  </div>
+</div>
+<script>
+// ─── NAV ───
+function showPage(id, tab){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  if(tab) tab.classList.add('active');
+  else {
+    document.querySelectorAll('.nav-tab').forEach(t=>{
+      if(t.getAttribute('onclick')&&t.getAttribute('onclick').includes(id)) t.classList.add('active');
+    });
+  }
+  window.scrollTo(0,0);
+}
+
+// Clock
+function updateClock(){
+  const now=new Date();
+  document.getElementById('navTime').textContent=
+    now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' · '+
+    now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+updateClock(); setInterval(updateClock,1000);
+// ─── STATIC DATA ───
+const hotspots=[
+{
+rank:1,name:'New Horizon College Road',
+count:2139,csi:66.5,
+density:85.3,repeat:75.7,peak:16.8,road:67.1,
+priority:'Critical',action:'Immediate Enforcement'
+},
+{
+rank:2,name:'BTP032 - Windsor Circle',
+count:1526,csi:65.7,
+density:80.4,repeat:77.8,peak:40.0,road:40.8,
+priority:'Critical',action:'Immediate Enforcement'
+},
+{
+rank:3,name:'BTP011 - RR Kalyana Mantapa, Dr. Rajkumar Road',
+count:466,csi:61.6,
+density:63.2,repeat:41.3,peak:86.6,road:57.7,
+priority:'Critical',action:'Target Patrol'
+},
+{
+rank:4,name:'MBT Road',
+count:2060,csi:61.5,
+density:84.8,repeat:7.4,peak:75.6,road:70.7,
+priority:'Critical',action:'Target Patrol'
+},
+{
+rank:5,name:'BTP082 - KR Market Junction',
+count:3783,csi:58.1,
+density:93.6,repeat:9.9,peak:51.2,road:53.0,
+priority:'High',action:'Extra Officers'
+},
+{
+rank:6,name:'BTP058 - Subbanna Junction',
+count:2318,csi:58.0,
+density:86.5,repeat:26.1,peak:67.7,road:22.0,
+priority:'High',action:'Extra Officers'
+},
+{
+rank:7,name:'Hosur Road',
+count:1053,csi:57.4,
+density:75.0,repeat:8.3,peak:74.2,road:69.6,
+priority:'High',action:'Extra Officers'
+},
+{
+rank:8,name:'Outer Ring Road',
+count:3319,csi:56.5,
+density:91.7,repeat:3.7,peak:34.2,road:80.5,
+priority:'High',action:'Patrol'
+},
+{
+rank:9,name:'BTP051 - Safina Plaza Junction',
+count:5882,csi:55.2,
+density:100.0,repeat:29.8,peak:10.5,road:37.7,
+priority:'High',action:'Patrol'
+},
+{
+rank:10,name:'BTP170 - Dr. Bheem Rao Palace, Chord Road',
+count:186,csi:54.0,
+density:49.9,repeat:30.6,peak:88.7,road:57.5,
+priority:'High',action:'Patrol'
+},
+{
+rank:11,name:'BTP020 - Hosahalli Metro Station',
+count:1823,csi:53.6,
+density:83.0,repeat:51.4,peak:13.0,road:33.1,
+priority:'Medium',action:'Monitor'
+},
+{
+rank:12,name:'Chikka Banavara RS Road',
+count:110,csi:53.6,
+density:42.4,repeat:100.0,peak:40.9,road:22.8,
+priority:'Medium',action:'Monitor'
+},
+{
+rank:13,name:'Unnamed Road',
+count:1824,csi:53.4,
+density:83.0,repeat:4.8,peak:46.4,road:65.0,
+priority:'Medium',action:'Monitor'
+},
+{
+rank:14,name:'BTP040 - Elite Junction',
+count:4705,csi:53.2,
+density:96.8,repeat:20.5,peak:26.6,road:27.1,
+priority:'Medium',action:'Monitor'
+},
+{
+rank:15,name:'BTP042 - Minsk Square Junction (CTO)',
+count:868,csi:53.1,
+density:72.2,repeat:76.5,peak:4.6,road:27.9,
+priority:'Medium',action:'Monitor'
+},
+{
+rank:16,name:'BTP057 - Anand Rao Junction',
+count:1813,csi:53.0,
+density:82.9,repeat:11.6,peak:47.9,road:49.4,
+priority:'Medium',action:'Monitor'
+},
+{
+rank:17,name:'BTP136 - Hosur-Tavarkere Road Junction',
+count:180,csi:52.4,
+density:49.5,repeat:9.4,peak:76.9,road:99.4,
+priority:'Medium',action:'Monitor'
+},
+{
+rank:18,name:'BTP044 - Sagar Theatre Junction',
+count:4468,csi:52.3,
+density:96.0,repeat:19.9,peak:22.1,road:30.3,
+priority:'Medium',action:'Monitor'
+},
+{
+rank:19,name:'Mumbai Bengaluru Highway',
+count:825,csi:52.0,
+density:71.5,repeat:5.7,peak:56.0,road:72.0,
+priority:'Medium',action:'Monitor'
+},
+{
+rank:20,name:'Jakkur Main Road',
+count:248,csi:51.8,
+density:54.1,repeat:14.2,peak:100.0,road:44.4,
+priority:'Medium',action:'Monitor'
+}
+];
+// Build hotspot table
+const tbody=document.getElementById('hotspotBody');
+hotspots.forEach(h=>{
+  const pr={Critical:'p-critical',High:'p-high',Medium:'p-medium',Low:'p-low'}[h.priority]||'p-low';
+  const sc=h.csi>=90?'color:var(--red)':h.csi>=70?'color:var(--orange)':h.csi>=50?'color:#EAB308':'color:var(--green)';
+  tbody.innerHTML+=`<tr><td><span class="rank-badge">${h.rank}</span></td><td style="font-weight:600">${h.name}</td><td>${h.count.toLocaleString()}</td><td><span style="${sc};font-weight:700">${h.csi}</span></td><td><span class="priority-badge ${pr}">${h.priority}</span></td><td style="color:var(--muted)">${h.action}</td></tr>`;
+});
+
+// Enforcement cards
+const enfData = hotspots.map(h=>({
+
+ name:h.name,
+ csi:h.csi,
+
+ cls:h.csi>=60
+      ? 'enf-critical'
+      : h.csi>=55
+      ? 'enf-high'
+      : 'enf-medium',
+
+ pr:h.csi>=60
+      ? 'CRITICAL'
+      : h.csi>=55
+      ? 'HIGH'
+      : 'MEDIUM',
+
+ prcls:h.csi>=60
+      ? 'p-critical'
+      : h.csi>=55
+      ? 'p-high'
+      : 'p-medium',
+
+ officers:h.csi>=60 ? 3 : h.csi>=55 ? 2 : 1,
+
+ tow:h.csi>=55,
+
+ barricade:h.csi>=60,
+
+ reason:`CSI ${h.csi} with ${h.count} recorded violations`
+}));
+const grid=document.getElementById('enfGrid');
+enfData.forEach(e=>{
+  grid.innerHTML+=`<div class="enf-card ${e.cls}"><div class="enf-name">${e.name}</div><div class="enf-csi">CSI: <span style="${e.csi>=90?'color:var(--red)':e.csi>=70?'color:var(--orange)':'color:#EAB308'}">${e.csi}</span> &nbsp;<span class="priority-badge ${e.prcls}">${e.pr}</span></div><div class="enf-resources">${e.officers?`<span class="res-chip res-officer">👮 ${e.officers} Officer${e.officers>1?'s':''}</span>`:''} ${e.tow?`<span class="res-chip res-tow">🚚 Tow Truck</span>`:''} ${e.barricade?`<span class="res-chip res-barricade">🚧 Barricades</span>`:''}</div><div class="enf-reason">${e.reason}</div></div>`;
+});
+
+// ─── RESOURCE ALLOCATION ───
+const ALLOC_ZONES = hotspots.map(h=>({
+
+ name:h.name,
+
+ csi:h.csi,
+
+ priority:
+   h.csi>=60
+   ? 'Critical'
+   : h.csi>=55
+   ? 'High'
+   : 'Medium'
+}));
+let availOfficers = 30;
+let availTow      = 10;
+
+function adjustRes(type, delta) {
+  if (type === 'officers') {
+    availOfficers = Math.max(0, Math.min(99, availOfficers + delta));
+    document.getElementById('officers-val').textContent = availOfficers;
+  } else {
+    availTow = Math.max(0, Math.min(20, availTow + delta));
+    document.getElementById('tow-val').textContent = availTow;
+  }
+  renderAllocation();
+}
+
+function renderAllocation() {
+  const totalCsi = ALLOC_ZONES.reduce((s, z) => s + z.csi, 0);
+
+  let zones = ALLOC_ZONES.map(z => ({
+    ...z,
+    idealO: Math.max(1, Math.round((z.csi / totalCsi) * availOfficers * 1.6)),
+    idealT: 0  // tow trucks distributed by CSI below
+  }));
+
+  // Scale officers to budget
+  let totalO = zones.reduce((s, z) => s + z.idealO, 0);
+  if (totalO > availOfficers) {
+    const scale = availOfficers / totalO;
+    zones = zones.map(z => ({ ...z, idealO: Math.max(0, Math.floor(z.idealO * scale)) }));
+    let rem = availOfficers - zones.reduce((s, z) => s + z.idealO, 0);
+    for (let i = 0; i < zones.length && rem > 0; i++) { zones[i].idealO++; rem--; }
+  }
+
+  // Distribute tow trucks to highest CSI zones first until budget runs out
+  const sortedByCsi = [...zones].sort((a, b) => b.csi - a.csi);
+  let towLeft = availTow;
+  sortedByCsi.forEach(z => {
+    if (towLeft > 0 && (z.priority === 'Critical' || z.priority === 'High')) {
+      z.idealT = 1;
+      towLeft--;
+    }
+  });
+
+  const deployedO = zones.reduce((s, z) => s + z.idealO, 0);
+  const deployedT = zones.reduce((s, z) => s + z.idealT, 0);
+  
+  // Check which priority levels are missing officers
+  const missingCritical = zones.some(z => z.priority === 'Critical' && z.idealO === 0);
+  const missingHigh     = zones.some(z => z.priority === 'High' && z.idealO === 0);
+  const missingAny      = zones.some(z => z.idealO === 0);
+
+  // Decide the dynamic text based on coverage
+  let okText = '';
+  if (!missingAny) {
+    okText = '✅ All zones covered';
+  } else if (!missingCritical && !missingHigh) {
+    okText = '✅ All critical and high zones covered';
+  } else if (!missingCritical) {
+    okText = '✅ All critical zones covered';
+  }
+
+  // Only trigger the red warning if Critical zones are left empty
+  const shortage = missingCritical; 
+
+  document.getElementById('officers-deployed').textContent = deployedO;
+  document.getElementById('officers-total').textContent    = availOfficers;
+  document.getElementById('tow-deployed').textContent      = deployedT;
+  document.getElementById('tow-total').textContent         = availTow;
+  document.getElementById('alloc-warn').style.display      = shortage ? 'inline' : 'none';
+  
+  // Inject the dynamic success message
+  const okEl = document.getElementById('alloc-ok');
+  if (!shortage) {
+    okEl.style.display = 'inline';
+    okEl.textContent   = okText;
+  } else {
+    okEl.style.display = 'none';
+  }
+
+  const maxO = Math.max(...zones.map(z => z.idealO), 1);
+  const al   = document.getElementById('allocList');
+  al.innerHTML = '';
+  zones.forEach(z => {
+    const barPct  = (z.idealO / maxO) * 100;
+    const isShort = z.priority !== 'Medium' && z.idealO === 0;
+    al.innerHTML += `
+      <div class="alloc-row" style="${isShort ? 'border:1px solid rgba(239,68,68,0.3);' : ''}">
+        <span class="alloc-name">${z.name}</span>
+        <div style="flex:1">
+          <div class="alloc-bar-wrap">
+            <div class="alloc-bar-fill" style="width:${barPct}%;background:${isShort ? 'var(--red)' : 'linear-gradient(90deg,var(--blue),var(--cyan))'}"></div>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">
+            CSI ${z.csi} · ${z.priority}
+            ${isShort ? '<span style="color:var(--red)"> · No officers available</span>' : ''}
+          </div>
+        </div>
+        <div class="alloc-chips">
+          ${z.idealO > 0 ? `<span class="res-chip res-officer">👮 ${z.idealO}</span>` : '<span style="font-size:11px;color:var(--red)">👮 0</span>'}
+          ${z.idealT > 0 ? `<span class="res-chip res-tow">🚚 ${z.idealT}</span>`      : ''}
+        </div>
+      </div>`;
+  });
+}
+
+renderAllocation();
+const CSI_LOCATIONS={};
+
+hotspots.slice(0,10).forEach((h,i)=>{
+
+ CSI_LOCATIONS[i]={
+   name:h.name,
+   score:h.csi,
+   density:h.density,
+   repeat:h.repeat,
+   peak:h.peak,
+   road:h.road
+ };
+
+});
+const csiSelect = document.getElementById("csiLocation");
+
+hotspots.slice(0,10).forEach((h,i)=>{
+
+    csiSelect.innerHTML += `
+        <option value="${i}">
+            ${h.name}
+        </option>
+    `;
+
+});// ─── CHARTS ───
+new Chart(document.getElementById('pieChart'),{
+
+  type:'doughnut',
+  data:{labels:['No Parking','Wrong Parking','Double Parking','Footpath','Main Road'],datasets:[{data:[31,24,19,16,10],backgroundColor:['#3B82F6','#22D3EE','#EF4444','#F59E0B','#22C55E'],borderWidth:0,hoverOffset:4}]},
+  options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false}}}
+});
+new Chart(document.getElementById('barChart'),{
+  type:'bar',
+  data:{labels:['Cars','Bikes','Scooters','Autos','Trucks'],datasets:[{data:[5840,3210,2490,1820,923],backgroundColor:['#3B82F6','#22D3EE','#F59E0B','#22C55E','#EF4444'],borderRadius:4}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748B',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748B',font:{size:11}}}}}
+});
+const lbl30=[],v30=[];
+for(let i=29;i>=0;i--){const d=new Date(2026,5,17-i);lbl30.push(d.getDate()+'/'+(d.getMonth()+1));v30.push(300+Math.round(Math.random()*300+Math.sin(i/3)*80+(i>20?i*8:0)));}
+new Chart(document.getElementById('lineChart'),{
+  type:'line',
+  data:{labels:lbl30,datasets:[{data:v30,borderColor:'#3B82F6',backgroundColor:'rgba(59,130,246,0.08)',borderWidth:2,tension:0.4,pointRadius:2,fill:true}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748B',font:{size:10},maxTicksLimit:10}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748B',font:{size:10}}}}}
+});
+
+// Real aggregates computed from all 298,450 records in police.csv
+const DASHBOARD_EXTRA = {"dayOfWeek":{"labels":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"counts":[38931,42930,43067,41528,41702,43427,46865]},"topStations":{"labels":["Upparpet","Shivajinagar","Malleshwaram","HAL Old Airport","City Market","Vijayanagara","Rajajinagar","Kodigehalli","Magadi Road","Jeevanbheemanagar","K.R. Pura","Halasuru Gate","Mahadevapura","Chikkajala","HSR Layout"],"counts":[34468,28044,22200,20819,17646,14652,10998,10916,8558,6736,6546,6294,6187,5834,5018]}};
+
+new Chart(document.getElementById('dowChart'),{
+  type:'bar',
+  data:{
+    labels:DASHBOARD_EXTRA.dayOfWeek.labels.map(d=>d.slice(0,3)),
+    datasets:[{data:DASHBOARD_EXTRA.dayOfWeek.counts,backgroundColor:'#22D3EE',borderRadius:4}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+    tooltip:{callbacks:{label:ctx=>ctx.parsed.y.toLocaleString()+' violations'}}},
+    scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748B',font:{size:11}}},
+            y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748B',font:{size:11}}}}}
+});
+
+new Chart(document.getElementById('stationChart'),{
+  type:'bar',
+  data:{
+    labels:DASHBOARD_EXTRA.topStations.labels,
+    datasets:[{data:DASHBOARD_EXTRA.topStations.counts,backgroundColor:'#3B82F6',borderRadius:4}]
+  },
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+    tooltip:{callbacks:{label:ctx=>ctx.parsed.x.toLocaleString()+' violations'}}},
+    scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748B',font:{size:11}}},
+            y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748B',font:{size:11}}}}}
+});
+const csiRadarChart = new Chart(document.getElementById('csiRadar'),{
+  type:'radar',
+  data:{labels:['Density','Repeat Rate','Peak Hour','Road Block'], datasets:[{
+    label:'Metro Station',
+    data:[38,24,18,15],
+    borderColor:'#EF4444',	
+    backgroundColor:'rgba(239,68,68,0.1)',
+    borderWidth:2,
+    pointRadius:3}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{display:false},angleLines:{color:'rgba(255,255,255,0.06)'},pointLabels:{color:'#94A3B8',font:{size:10}}}}}
+});
+function updateCSI(){
+
+    const d = CSI_LOCATIONS[
+        document.getElementById("csiLocation").value
+    ];
+
+    document.getElementById("csiZoneText").textContent =
+        d.name;
+
+    document.getElementById("csiScoreValue").textContent =
+        d.score;
+
+    const badge =
+        document.getElementById("csiPriority");
+
+    if(d.score >= 60){
+    badge.textContent = "CRITICAL";
+    badge.className = "priority-badge p-critical";
+}
+else if(d.score >= 55){
+    badge.textContent = "HIGH";
+    badge.className = "priority-badge p-high";
+}
+else{
+    badge.textContent = "MEDIUM";
+    badge.className = "priority-badge p-medium";
+}
+
+    document.getElementById("valDensity").textContent =
+        d.density;
+
+    document.getElementById("valRepeat").textContent =
+        d.repeat;
+
+    document.getElementById("valPeak").textContent =
+        d.peak;
+
+    document.getElementById("valRoad").textContent =
+        d.road;
+document.getElementById("densityPct").textContent =
+    d.density + "%";
+
+document.getElementById("repeatPct").textContent =
+    d.repeat + "%";
+
+document.getElementById("peakPct").textContent =
+    d.peak + "%";
+
+document.getElementById("roadPct").textContent =
+    d.road + "%";
+
+   document.getElementById("barDensity").style.width =
+    d.density + "%";
+
+document.getElementById("barRepeat").style.width =
+    d.repeat + "%";
+
+document.getElementById("barPeak").style.width =
+    d.peak + "%";
+
+document.getElementById("barRoad").style.width =
+    d.road + "%";
+csiRadarChart.data.datasets[0].label = d.name;
+
+csiRadarChart.data.datasets[0].data = [
+    d.density,
+    d.repeat,
+    d.peak,
+    d.road
+];
+
+csiRadarChart.update();
+}
+
+// ─── SIMULATION ───
+// ─── SIMULATION ───
+const simSlider = document.getElementById('simSlider');
+let simBaseCsi = 0;
+let simChartInst = null;
+const simLbls = [];
+for (let p = 0; p <= 100; p += 5) simLbls.push(p + '%');
+
+function calcCsi(p, base) { 
+  // Calculates a dynamic baseline (e.g., 20% of the starting traffic remains, with a hard floor of 10)
+  const locationBaseline = Math.max(10, base * 0.20); 
+  
+  return Number((base - ((base - locationBaseline) * (p / 100))).toFixed(1)); 
+}
+// Populate Top 10 Zones into dropdown
+const simLocDropdown = document.getElementById('simLocation');
+const top10SimZones = [...ALLOC_ZONES].sort((a,b) => b.csi - a.csi).slice(0, 10);
+
+top10SimZones.forEach(z => {
+  const opt = document.createElement('option');
+  opt.value = z.name;
+  opt.dataset.csi = z.csi;
+  opt.textContent = z.name; // Removed the (CSI: ) text
+  simLocDropdown.appendChild(opt);
+});
+function initSimChart() {
+  const ctx = document.getElementById('simChart').getContext('2d');
+  simChartInst = new Chart(ctx, {
+    type: 'line',
+    data: { 
+      labels: simLbls, 
+      datasets: [
+        { label: 'Projected CSI', data: [], borderColor: '#22D3EE', backgroundColor: 'rgba(34,211,238,0.07)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 2 },
+        { label: 'Marker', data: [], borderColor: '#EF4444', backgroundColor: '#EF4444', pointRadius: 6, borderWidth: 0, showLine: false }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748B', font: { size: 10 } } }, y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748B', font: { size: 10 } } } } }
+  });
+}
+
+function updateSim() {
+  const opt = simLocDropdown.options[simLocDropdown.selectedIndex];
+  const zName = opt.value;
+  simBaseCsi = parseFloat(opt.dataset.csi);
+  
+  // Reset slider
+  simSlider.value = 0;
+  document.getElementById('simPct').textContent = '0%';
+  
+  // Update Current Box
+  document.getElementById('simCurrentCsi').textContent = simBaseCsi;
+  document.getElementById('simCurrentDesc').textContent = `${zName} — No intervention`;
+  
+  // Chart Math
+  const simVs = [];
+  for (let p = 0; p <= 100; p += 5) simVs.push(calcCsi(p, simBaseCsi));
+  
+  if (!simChartInst) initSimChart();
+  
+  simChartInst.data.datasets[0].data = simVs;
+  simChartInst.data.datasets[1].data = simLbls.map((_, i) => i === 0 ? simBaseCsi : null);
+  simChartInst.update();
+  
+  updateSimResults(0);
+}
+
+function updateSimResults(p) {
+  const nc = calcCsi(p, simBaseCsi);
+  document.getElementById('simPct').textContent = p + '%';
+  document.getElementById('simResult').textContent = nc;
+  
+  const simResColor = nc >= 90 ? 'var(--red)' : nc >= 70 ? 'var(--orange)' : nc >= 50 ? '#EAB308' : 'var(--green)';
+  document.getElementById('simCurrentCsi').style.color = simBaseCsi >= 90 ? 'var(--red)' : simBaseCsi >= 70 ? 'var(--orange)' : simBaseCsi >= 50 ? '#EAB308' : 'var(--green)';
+  document.getElementById('simResult').style.color = simResColor;
+  
+  document.getElementById('simDesc').textContent = p === 0 ? 'No violations removed' : `After removing ${p}% of violations`;
+  
+  const sc = document.getElementById('simChange');
+  if (p > 0) {
+    sc.style.display = 'block';
+    sc.textContent = '▼ CSI reduced by ' + Number((simBaseCsi - nc).toFixed(1)) + ' points';
+  } else {
+    sc.style.display = 'none';
+  }
+  
+  const idx = Math.round(p / 5);
+  simChartInst.data.datasets[1].data = simLbls.map((_, i) => i === idx ? nc : null);
+  simChartInst.update('none');
+}
+
+simSlider.oninput = function() { updateSimResults(parseInt(this.value)); };
+
+// Initialize simulation safely on load
+setTimeout(updateSim, 100);
+// ─── ZONE REPORT DATA (synthetic — replace with real CSV data) ───
+const zoneData=(function(){
+  const zones=[];
+  const areas=[
+    [12.925,77.619,342,6.2,4.1,true],[12.905,77.701,285,14.3,11.2,true],
+    [12.956,77.519,198,8.7,7.1,false],[12.977,77.581,421,18.2,15.3,true],
+    [12.941,77.612,156,5.1,4.0,false],[12.968,77.603,89,3.2,2.8,false],
+    [12.932,77.644,312,12.6,9.4,true],[12.914,77.578,74,2.1,1.9,false],
+    [12.988,77.591,267,16.8,13.7,true],[12.962,77.637,183,7.4,5.9,false],
+    [12.921,77.555,445,19.1,16.2,true],[12.949,77.628,98,4.3,3.5,false],
+    [12.975,77.614,334,11.2,8.8,true],[12.938,77.591,212,9.5,7.2,false],
+    [12.958,77.572,167,6.8,5.3,false],[12.929,77.633,388,17.4,14.1,true],
+    [12.983,77.601,276,13.9,10.6,true],[12.942,77.618,143,5.6,4.4,false],
+    [12.961,77.589,322,10.3,8.1,false],[12.919,77.645,251,8.9,6.7,false],
+  ];
+  areas.forEach(([lat,lon,v,ar,mr,ur])=>zones.push({lat,lon,violations:v,avgResp:ar,medResp:mr,underResourced:ur}));
+  return zones;
+})();
+
+// Zone scatter chart
+const scatterData=zoneData.map(z=>({x:z.violations,y:z.avgResp,ur:z.underResourced}));
+new Chart(document.getElementById('zoneScatter'),{
+  type:'scatter',
+  data:{datasets:[
+    {label:'Under-resourced',data:scatterData.filter(d=>d.ur).map(d=>({x:d.x,y:d.y})),backgroundColor:'rgba(239,68,68,0.7)',pointRadius:7,pointHoverRadius:9},
+    {label:'Adequate',data:scatterData.filter(d=>!d.ur).map(d=>({x:d.x,y:d.y})),backgroundColor:'rgba(59,130,246,0.7)',pointRadius:6,pointHoverRadius:8}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:'#94A3B8',font:{size:11}},position:'top'},
+      tooltip:{callbacks:{label:ctx=>`Violations: ${ctx.parsed.x} · Response: ${ctx.parsed.y}h`}}},
+    scales:{
+      x:{title:{display:true,text:'Violation Count',color:'#64748B'},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748B'}},
+      y:{title:{display:true,text:'Avg Response (hrs)',color:'#64748B'},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748B'}}
+    }
+  }
+});
+
+function renderZoneTable(){
+  const minV=parseInt(document.getElementById('zone-min').value);
+  const sortBy=document.getElementById('zone-sort').value;
+  const urOnly=document.getElementById('zone-ur-only').checked;
+  let data=zoneData.filter(z=>z.violations>=minV);
+  if(urOnly) data=data.filter(z=>z.underResourced);
+  if(sortBy==='violations') data.sort((a,b)=>b.violations-a.violations);
+  else if(sortBy==='response') data.sort((a,b)=>b.avgResp-a.avgResp);
+  else data.sort((a,b)=>b.underResourced-a.underResourced);
+
+  document.getElementById('zk-zones').textContent=data.length;
+  document.getElementById('zk-ur').textContent=data.filter(z=>z.underResourced).length;
+  const avgR=data.length?( data.reduce((s,z)=>s+z.avgResp,0)/data.length).toFixed(1):'—';
+  document.getElementById('zk-resp').textContent=avgR+'h';
+
+  const tb=document.getElementById('zone-tbody');
+  tb.innerHTML='';
+  data.forEach((z,i)=>{
+    const badge=z.underResourced
+      ?`<span class="priority-badge p-critical">⚠️ Under-resourced</span>`
+      :`<span class="priority-badge p-low">✅ Adequate</span>`;
+    tb.innerHTML+=`<tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td>${z.lat.toFixed(3)}</td><td>${z.lon.toFixed(3)}</td>
+      <td style="font-weight:600;color:${z.violations>300?'var(--red)':z.violations>150?'var(--orange)':'var(--text)'}">${z.violations}</td>
+      <td style="color:${z.avgResp>15?'var(--red)':z.avgResp>8?'var(--orange)':'var(--green)'}">${z.avgResp.toFixed(1)}</td>
+      <td>${z.medResp.toFixed(1)}</td>
+      <td>${badge}</td>
+    </tr>`;
+  });
+}
+renderZoneTable();
+
+function downloadZoneCSV(){
+  const minV=parseInt(document.getElementById('zone-min').value);
+  let data=zoneData.filter(z=>z.violations>=minV);
+  let csv='Latitude,Longitude,Violations,Avg Response (hrs),Median Response (hrs),Status\n';
+  data.forEach(z=>csv+=`${z.lat},${z.lon},${z.violations},${z.avgResp},${z.medResp},${z.underResourced?'Under-resourced':'Adequate'}\n`);
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='zone_report.csv';a.click();
+}
+
+// ─── HOTSPOT PREDICTOR ───
+let HOTSPOT_DATA = null;
+
+fetch('./hotspot_predictions.json')
+  .then(r => {
+    if(!r.ok) throw new Error('hotspot_predictions.json not found');
+    return r.json();
+  })
+  .then(data => {
+    HOTSPOT_DATA = data;
+    console.log('✅ Hotspot model loaded:', data.meta.model);
+    console.log('   Zones:', data.zones.length, '· Cells:', data.meta.generatedRows);
+  })
+  .catch(err => {
+    console.error('❌ Failed to load hotspot_predictions.json:', err);
+    document.getElementById('pred-summary').style.display = 'block';
+    document.getElementById('pred-summary').innerHTML =
+      '<span style="color:var(--red)">⚠️ hotspot_predictions.json not found. Place the file in the same folder as this HTML.</span>';
+  });
+// ─── REAL MODEL DATA ───
+// HOTSPOT_DATA is generated offline by a RandomForestRegressor (300 trees)
+// trained on all 298,450 real records in police.csv (Nov 2023 - Apr 2024).
+// It is a fully-enumerated lookup table: 20 zones x 7 days x 24 hours = 3,360
+// cells, so the predictor below does an O(1) lookup, not live computation.
+// See HOTSPOT_DATA.meta for model details.
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const LABELS = ['Low','Medium','High'];
+
+let predState=null; // persistent state
+let predLeafletMap=null; // persistent Leaflet map instance for the predictor
+let anLeafletMap=null;   // persistent Leaflet map instance for the analyser
+
+function runHotspotPredictor(){
+  if(!HOTSPOT_DATA){
+    document.getElementById('pred-summary').style.display='block';
+    document.getElementById('pred-summary').innerHTML=
+      '<span style="color:var(--orange)">⏳ Model data still loading, please try again in a moment...</span>';
+    return;
+  }
+  const day=document.getElementById('pred-day').value;
+  const hour=parseInt(document.getElementById('pred-hour').value);
+  const dayIdx=DAYS.indexOf(day);
+  const results=HOTSPOT_DATA.zones.map((z,zi)=>{
+    const [predicted,labelCode,confidence]=HOTSPOT_DATA.grid[zi][dayIdx][hour];
+    return{
+      name:z.name, lat:z.lat, lon:z.lon, nearJunc:z.nearJunc,
+      avgResp:z.avgResp, underR:z.underResourced,
+      predicted, label:LABELS[labelCode], confidence
+    };
+  }).sort((a,b)=>b.predicted-a.predicted);
+
+  predState={day,hour,results};
+  renderPredictorResults();
+}
+
+function renderPredictorResults(){
+  if(!predState) return;
+  const{day,hour,results}=predState;
+  const high=results.filter(r=>r.label==='High');
+  const urCount=results.filter(r=>r.underR).length;
+
+  document.getElementById('pred-summary').style.display='block';
+  document.getElementById('pred-summary').innerHTML=
+    `<span style="color:var(--text);font-weight:600">${day} at ${hour.toString().padStart(2,'0')}:00</span><br>
+     🔴 <b style="color:var(--text)">${high.length}</b> High-risk zones &nbsp;·&nbsp;
+     ⚠️ <b style="color:var(--text)">${urCount}</b> Under-resourced`;
+
+  const container=document.getElementById('pred-results');
+  container.innerHTML=`
+    <div class="result-section" style="margin-bottom:16px">
+      <div class="result-section-title">Predicted High-Risk Zones — ${day} ${hour.toString().padStart(2,'0')}:00</div>
+      <div class="pred-map-wrap"><div class="pred-map-inner"><div id="predMap"></div></div></div>
+    </div>
+    <div class="result-section">
+      <div class="result-section-title">Zone Rankings</div>
+      <div style="overflow-x:auto">
+      <table class="data-table">
+        <thead><tr><th>#</th><th>Zone</th><th>Predicted Violations</th><th>Intensity</th><th>Confidence</th><th>Near Junction</th><th>Avg Response</th><th>Status</th></tr></thead>
+        <tbody id="pred-tbody"></tbody>
+      </table>
+      </div>
+    </div>
+    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:14px;font-size:13px;color:var(--text);line-height:1.7;margin-top:12px">
+      💡 <strong>${urCount} of ${results.length} zones</strong> are under-resourced (high violations + slow enforcement). Pre-position officers before ${hour.toString().padStart(2,'0')}:00 on ${day}s.
+    </div>`;
+
+  // Fill table
+  const tb=document.getElementById('pred-tbody');
+  results.forEach((r,i)=>{
+    const lc=r.label==='High'?'p-critical':r.label==='Medium'?'p-high':'p-low';
+    const ls=r.label==='High'?'var(--red)':r.label==='Medium'?'var(--orange)':'var(--green)';
+    tb.innerHTML+=`<tr>
+      <td><span class="rank-badge">${i+1}</span></td>
+      <td style="font-weight:600">${r.name}</td>
+      <td style="font-weight:700;color:${ls}">${r.predicted}</td>
+      <td><span class="priority-badge ${lc}">${r.label}</span></td>
+      <td style="color:var(--muted)">${r.confidence}%</td>
+      <td>${r.nearJunc?'✅ Yes':'—'}</td>
+      <td style="color:${r.avgResp>11?'var(--red)':r.avgResp>7?'var(--orange)':'var(--green)'}">${r.avgResp}h</td>
+      <td>${r.underR?'<span class="priority-badge p-critical">⚠️ Under-resourced</span>':'<span class="priority-badge p-low">✅ OK</span>'}</td>
+    </tr>`;
+  });
+
+  // Draw prediction map
+  setTimeout(()=>drawPredMap(results),50);
+}
+
+function drawPredMap(results){
+  const el=document.getElementById('predMap');
+  if(!el || typeof L==='undefined') return;
+
+  // Tear down any previous map instance bound to the old (now-detached) DOM node
+  if(predLeafletMap){ predLeafletMap.remove(); predLeafletMap=null; }
+
+  const map=L.map(el,{scrollWheelZoom:false,zoomControl:true,attributionControl:true});
+
+  // Static black basemap with real roads (CartoDB Dark Matter) — since zone
+  // coordinates are fixed, this tile layer is the constant backdrop and only
+  // the risk markers on top change between predictions.
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+    subdomains:'abcd',
+    maxZoom:19,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  }).addTo(map);
+
+  const bounds=[];
+  results.forEach((r,i)=>{
+    bounds.push([r.lat,r.lon]);
+    const rad=r.label==='High'?14:r.label==='Medium'?11:8;
+    const col=r.label==='High'?'#EF4444':r.label==='Medium'?'#F59E0B':'#22C55E';
+    const icon=L.divIcon({
+      className:'pred-zone-marker',
+      html:`<div class="pzm-glow" style="--mc:${col};width:${rad*4}px;height:${rad*4}px;margin-left:${-rad*2}px;margin-top:${-rad*2}px"></div>
+            <div class="pzm-dot" style="--mc:${col};width:${rad*2}px;height:${rad*2}px;margin-left:${-rad}px;margin-top:${-rad}px;font-size:${Math.round(rad*0.85)}px">${i+1}</div>`,
+      iconSize:[0,0]
+    });
+    L.marker([r.lat,r.lon],{icon}).addTo(map).bindTooltip(
+      `<b style="color:#fff">${r.name}</b><br>
+       <span class="tt-k">Predicted:</span> <b>${r.predicted}</b><br>
+       <span class="tt-k">Intensity:</span> <b style="color:${col}">${r.label}</b><br>
+       <span class="tt-k">Confidence:</span> ${r.confidence}%`,
+      {className:'pred-leaflet-tooltip',direction:'top',offset:[0,-rad],sticky:true}
+    );
+  });
+
+  if(bounds.length){
+    map.fitBounds(bounds,{padding:[5,5]});
+    map.setZoom(11);
+  }else{
+    map.setView([12.9716,77.5946],11); // fallback: Bengaluru
+  }
+
+  predLeafletMap=map;
+}
+
+// ─── VIOLATION ANALYSER ───
+let anState=null;
+
+function runViolationAnalyser(){
+  if(!HOTSPOT_DATA){
+    document.getElementById('an-results').innerHTML=
+      '<div class="results-placeholder"><div class="icon">⏳</div><div>Model data still loading, please try again in a moment...</div></div>';
+    return;
+  }
+
+  const viol=document.getElementById('an-viol').value;
+  const vtype=document.getElementById('an-vtype').value;
+  const hour=parseInt(document.getElementById('an-hour').value);
+  const day=document.getElementById('an-day').value;
+  const lat=parseFloat(document.getElementById('an-lat').value);
+  const lon=parseFloat(document.getElementById('an-lon').value);
+  const nearJunc=document.getElementById('an-junc').checked;
+  const dayIdx=DAYS.indexOf(day);
+
+  // Find nearest zone in the REAL model (by lat/lon), then look up that
+  // zone's actual day+hour cell from HOTSPOT_DATA.grid — same source of
+  // truth as the Hotspot Predictor, instead of a disconnected rule-of-thumb.
+  let nearestIdx=0, bestDist=Infinity;
+  HOTSPOT_DATA.zones.forEach((z,zi)=>{
+    const d=Math.sqrt((z.lat-lat)**2+(z.lon-lon)**2);
+    if(d<bestDist){bestDist=d;nearestIdx=zi;}
+  });
+  const nearestZone=HOTSPOT_DATA.zones[nearestIdx];
+  const [modelCount,modelLabelCode,modelConfidence]=HOTSPOT_DATA.grid[nearestIdx][dayIdx][hour];
+  let severity=LABELS[modelLabelCode];
+  let confidence=modelConfidence;
+
+  // Violation-specific adjustments layered on top of the real model's
+  // base severity for this place/time — these nudge but never override
+  // what the trained model says about this hour.
+  const isMainRoad=['PARKING IN A MAIN ROAD','DOUBLE PARKING','PARKING NEAR ROAD CROSSING'].includes(viol);
+  const highVehicle=['TRUCK','TANKER','MAXI-CAB'].includes(vtype);
+  const severityRank={Low:0,Medium:1,High:2};
+  let rank=severityRank[severity];
+  if((isMainRoad||highVehicle||nearJunc) && rank<2) rank++;
+  severity=Object.keys(severityRank).find(k=>severityRank[k]===rank);
+
+  const zoneAvgResp=nearestZone.avgResp;
+  const zoneUr=nearestZone.underResourced;
+
+  const rec={
+    High:'Deploy officer immediately. High congestion risk for this zone at this hour.',
+    Medium:'Flag for next patrol cycle. Monitor if violations persist.',
+    Low:'Log and monitor. Low immediate congestion impact.'
+  }[severity];
+
+  anState={viol,vtype,hour,day,lat,lon,nearJunc,severity,confidence,rec,zoneAvgResp,zoneUr,
+            modelZoneName:nearestZone.name,modelCount,modelLabel:LABELS[modelLabelCode]};
+  renderAnalyserResults();
+}
+
+function renderAnalyserResults(){
+  if(!anState) return;
+  const{viol,vtype,hour,day,severity,confidence,rec,zoneAvgResp,zoneUr,lat,lon,nearJunc}=anState;
+  const sevClass={High:'sev-high',Medium:'sev-medium',Low:'sev-low'}[severity];
+  const sevColor={High:'var(--red)',Medium:'var(--orange)',Low:'var(--green)'}[severity];
+  const isPeak=(hour>=8&&hour<=11)||(hour>=17&&hour<=21);
+
+  document.getElementById('an-results').innerHTML=`
+    <div class="severity-box ${sevClass}">
+      <div class="sev-label">Severity Prediction</div>
+      <div class="sev-badge ${severity.toLowerCase()}">${severity==='High'?'🔴':severity==='Medium'?'🟠':'🟢'} ${severity.toUpperCase()}</div>
+      <div class="sev-conf">Confidence: <span>${confidence}%</span></div>
+      <div class="sev-action">
+        <strong>Recommended Action:</strong><br>${rec}
+      </div>
+      <div class="sev-zone">
+        Zone avg response: <strong style="color:${sevColor}">${zoneAvgResp}h</strong> &nbsp;·&nbsp;
+        ${zoneUr?'<span style="color:var(--red)">⚠️ Under-resourced zone — increase patrol frequency</span>':'<span style="color:var(--green)">✅ Adequate enforcement coverage</span>'}
+      </div>
+    </div>
+
+    <div class="result-section">
+      <div class="result-section-title">Input Summary</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+        <div style="background:var(--card2);padding:10px 14px;border-radius:8px"><span style="color:var(--muted)">Violation</span><br><strong>${viol}</strong></div>
+        <div style="background:var(--card2);padding:10px 14px;border-radius:8px"><span style="color:var(--muted)">Vehicle</span><br><strong>${vtype}</strong></div>
+        <div style="background:var(--card2);padding:10px 14px;border-radius:8px"><span style="color:var(--muted)">Time</span><br><strong>${hour.toString().padStart(2,'0')}:00 ${day}</strong> ${isPeak?'<span style="color:var(--orange);font-size:11px">● PEAK</span>':''}</div>
+        <div style="background:var(--card2);padding:10px 14px;border-radius:8px"><span style="color:var(--muted)">Junction</span><br><strong>${nearJunc?'Yes — elevated risk':'No'}</strong></div>
+        <div style="background:var(--card2);padding:10px 14px;border-radius:8px;grid-column:span 2"><span style="color:var(--muted)">Location</span><br><strong>${lat.toFixed(4)}, ${lon.toFixed(4)}</strong></div>
+      </div>
+    </div>
+
+    <div class="result-section">
+      <div class="result-section-title">Location on Map</div>
+      <div class="pred-map-wrap"><div class="pred-map-inner" style="height:320px"><div id="anMap"></div></div></div>
+    </div>`;
+
+  setTimeout(()=>drawAnMap(lat,lon,severity),50);
+}
+
+function drawAnMap(lat,lon,severity){
+  const el=document.getElementById('anMap');
+  if(!el || typeof L==='undefined') return;
+
+  // Tear down any previous map instance bound to the old (now-detached) DOM node
+  if(anLeafletMap){ anLeafletMap.remove(); anLeafletMap=null; }
+
+  const map=L.map(el,{scrollWheelZoom:false,zoomControl:true,attributionControl:true});
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+    subdomains:'abcd',
+    maxZoom:19,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  }).addTo(map);
+
+  const col={High:'#EF4444',Medium:'#F59E0B',Low:'#22C55E'}[severity];
+  const rad={High:14,Medium:11,Low:8}[severity];
+
+  const icon=L.divIcon({
+    className:'pred-zone-marker',
+    html:`<div class="pzm-glow" style="--mc:${col};width:${rad*4}px;height:${rad*4}px;margin-left:${-rad*2}px;margin-top:${-rad*2}px"></div>
+          <div class="pzm-dot" style="--mc:${col};width:${rad*2}px;height:${rad*2}px;margin-left:${-rad}px;margin-top:${-rad}px;font-size:${Math.round(rad*0.85)}px">!</div>`,
+    iconSize:[0,0]
+  });
+
+  L.marker([lat,lon],{icon}).addTo(map).bindTooltip(
+    `<b style="color:#fff">${lat.toFixed(4)}, ${lon.toFixed(4)}</b><br>
+     <span class="tt-k">Severity:</span> <b style="color:${col}">${severity}</b>`,
+    {className:'pred-leaflet-tooltip',direction:'top',offset:[0,-rad],sticky:true}
+  );
+
+  map.setView([lat,lon],14);
+  anLeafletMap=map;
+}
+// ─── NOW BUTTONS ───
+function setNowPredictor(){
+  const now    = new Date();
+  const hour   = now.getHours();
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const dayName  = dayNames[now.getDay()];
+
+  const hourSlider = document.getElementById('pred-hour');
+  const daySelect  = document.getElementById('pred-day');
+
+  hourSlider.value = hour;
+  document.getElementById('pred-hour-val').textContent = hour + ':00';
+  document.getElementById('pred-hour-sub').textContent =
+    hour < 12 ? 'Morning' : hour < 17 ? 'Afternoon' : 'Evening Peak';
+  daySelect.value = dayName;
+}
+
+function setNowAnalyser(){
+  const now    = new Date();
+  const hour   = now.getHours();
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const dayName  = dayNames[now.getDay()];
+
+  const hourSlider = document.getElementById('an-hour');
+  const daySelect  = document.getElementById('an-day');
+
+  hourSlider.value = hour;
+  document.getElementById('an-hour-val').textContent = hour + ':00';
+  daySelect.value = dayName;
+}
+updateCSI();
+</script>
+</body>
+</html>
