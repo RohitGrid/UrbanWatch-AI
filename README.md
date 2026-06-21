@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/banner.svg" alt="UrbanWatch AI" width="100%" />
+<img src="assets/logo.jpg" alt="UrbanWatch AI" width="100%" />
 
 ### AI-driven parking intelligence that turns raw violation data into targeted enforcement decisions
 
